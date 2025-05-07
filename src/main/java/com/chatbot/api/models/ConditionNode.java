@@ -1,18 +1,12 @@
 package com.chatbot.api.models;
 
-import org.springframework.expression.ExpressionParser;
-import org.springframework.expression.spel.standard.SpelExpressionParser;
+import java.util.Map;
 
-class ConditionNode implements WorkflowNode {
-    private String condition;  // e.g. "user.balance > 1000"
-    private WorkflowNode trueBranch;
-    private WorkflowNode falseBranch;
+import lombok.Getter;
 
-    public void execute() {
-    	ExpressionParser parser = new SpelExpressionParser();
-        boolean result = parser.parseExpression(condition).getValue();
-        if (result) trueBranch.execute();
-        else falseBranch.execute();
-    }
+@Getter
+public class ConditionNode {
+
+	private String expression;
+	private Map<String, Object> context;
 }
-
