@@ -16,7 +16,7 @@ import com.chatbot.api.services.UserService;
 
 @RestController
 @RequestMapping("/api/users")
-public class ChatbotController {
+public class WorkflowController {
 	
 	@Autowired
     private UserService userService;
