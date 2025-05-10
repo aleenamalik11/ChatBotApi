@@ -6,15 +6,13 @@ import com.chatbot.api.interfaces.WorkflowNode;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TypeAlias("message")
-public class MessageNode implements WorkflowNode
-{
-
-	private String message;
+@TypeAlias("input")
+public class InputNode implements WorkflowNode {
+    private String prompt;
+    // other fields as needed
 }
