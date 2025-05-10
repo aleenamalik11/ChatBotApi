@@ -12,32 +12,29 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.chatbot.api.models.User;
+import com.chatbot.api.models.Workflow;
 import com.chatbot.api.services.UserService;
+import com.chatbot.api.services.WorkflowService;
 
 @RestController
-@RequestMapping("/api/users")
+@RequestMapping("/api/workflows")
 public class WorkflowController {
 	
 	@Autowired
-    private UserService userService;
+    private WorkflowService workflowService;
 
     @GetMapping
-    public List<User> getAllUsers() {
-        return userService.getAllUsers();
+    public List<Workflow> getAllWorkflows() {
+        return workflowService.getAllWorkflows();
     }
 
-    @GetMapping("/{id}")
-    public User getUserById(@PathVariable String id) {
-        return userService.getUser(id);
+    @GetMapping("/{name}")
+    public Workflow getWorkflowByName(@PathVariable String name) {
+        return workflowService.getWorkflowByName(name);
     }
 
     @PostMapping
-    public void createUser(@RequestBody User user) {
-        userService.saveUser(user);
+    public void createWorkflow(@RequestBody Workflow workflow) {
+        workflowService.saveWorkflow(workflow);
     }
-
-    @DeleteMapping("/{id}")
-    public void deleteUser(@PathVariable String id) {
-        userService.deleteUser(id);
-    } 
 }

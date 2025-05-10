@@ -6,24 +6,27 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.chatbot.api.models.User;
+import com.chatbot.api.models.Workflow;
 import com.chatbot.api.repo.UserRepo;
+import com.chatbot.api.repo.WorkflowRepo;
 
 @Service
 public class WorkflowService {
 
     @Autowired
-    private UserRepo repository;
+    private WorkflowRepo repository;
 
-    public void saveUser(User user) {
-        repository.save(user);
+    public void saveWorkflow(Workflow workflow) {
+        repository.save(workflow);
     }
-    public User getUser(String id) {
+    public Workflow getWorkflow(String id) {
         return repository.findById(id).orElse(null);
     }
-    public List<User> getAllUsers(){
-        return repository.findAll();
+    public List<Workflow> getAllWorkflows(){
+        List<Workflow> workflos= repository.findAll();
+        return workflos;
     }
-    public void deleteUser(String id) {
-        repository.deleteById(id);
+    public Workflow getWorkflowByName(String name) {
+        return repository.findByName(name);
     }
 }
