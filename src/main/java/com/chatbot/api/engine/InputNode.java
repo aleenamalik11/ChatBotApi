@@ -1,5 +1,8 @@
 package com.chatbot.api.engine;
 
+import java.util.Map;
+import java.util.Scanner;
+
 import org.springframework.data.annotation.TypeAlias;
 
 import com.chatbot.api.models.Workflow;
@@ -16,9 +19,25 @@ import lombok.NoArgsConstructor;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class InputNode extends WorkflowNode {
     private String prompt;
+    private Map<String, Object> inputs;
     
     @Override
 	public String performExecution(Workflow workflow) {
-    	return "";		
+    	if (prompt == null || prompt.isBlank()) {
+            return "failure";
+        }
+
+        Scanner scanner = new Scanner(System.in);
+        System.out.println(prompt);
+
+        for (String variable : workflow.inputVariables) {
+            if (prompt.toLowerCase().contains(variable.toLowerCase())) {
+                System.out.print(variable + ": ");
+                String input = scanner.nextLine();
+                inputs.put(variable, input);
+            }
+        }
+
+        return "success";
 	}
 }

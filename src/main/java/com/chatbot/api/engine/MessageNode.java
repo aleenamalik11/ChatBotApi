@@ -21,6 +21,10 @@ public class MessageNode extends WorkflowNode
 	
 	@Override
 	public String performExecution(Workflow workflow) {
-		return message;	
+		if(message != null) {
+			System.out.println(message);
+			return "success";
+		}
+		else return "failure";
 	}
 }
