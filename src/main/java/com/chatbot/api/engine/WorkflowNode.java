@@ -1,9 +1,11 @@
-package com.chatbot.api.interfaces;
+package com.chatbot.api.engine;
 
-import com.chatbot.api.models.ConditionNode;
-import com.chatbot.api.models.CustomNode;
-import com.chatbot.api.models.InputNode;
-import com.chatbot.api.models.MessageNode;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+
+import com.chatbot.api.models.Workflow;
+import com.chatbot.api.services.WorkflowService;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -18,6 +20,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 	    @JsonSubTypes.Type(value = ConditionNode.class, name = "condition"),
 	    @JsonSubTypes.Type(value = InputNode.class, name = "input") // Add this for your input type
 	})
-public interface WorkflowNode {
-
+public abstract class WorkflowNode {
+	
+	public abstract String PerformExecution(Workflow workflow);
+	
+	public String getNextNode(String node, String resultKey, Map<String, Map<String, String>> connections) {
+		
+		return connections.get(node).get(resultKey);
+	}
 }

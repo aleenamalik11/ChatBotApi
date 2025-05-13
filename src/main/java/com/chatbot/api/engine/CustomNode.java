@@ -1,10 +1,8 @@
-package com.chatbot.api.models;
-
-import java.util.Map;
+package com.chatbot.api.engine;
 
 import org.springframework.data.annotation.TypeAlias;
 
-import com.chatbot.api.interfaces.WorkflowNode;
+import com.chatbot.api.models.Workflow;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 import lombok.Getter;
@@ -17,11 +15,15 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@TypeAlias("condition")
+@TypeAlias("custom_logic")
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class ConditionNode implements WorkflowNode
+public class CustomNode extends WorkflowNode
 {
 
-	private String expression;
-	private Map<String, Object> inputs;
+	private String function;
+	
+	@Override
+	public String PerformExecution(Workflow workflow) {
+		return "";
+	}
 }
