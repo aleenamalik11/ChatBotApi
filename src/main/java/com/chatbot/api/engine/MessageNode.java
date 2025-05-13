@@ -17,11 +17,10 @@ import lombok.NoArgsConstructor;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class MessageNode extends WorkflowNode
 {
-
 	private String message;
 	
 	@Override
 	public String performExecution(Workflow workflow) {
-		return "";		
+		return message;	
 	}
 }
