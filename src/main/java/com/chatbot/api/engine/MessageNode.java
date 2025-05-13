@@ -21,7 +21,7 @@ public class MessageNode extends WorkflowNode
 	private String message;
 	
 	@Override
-	public String PerformExecution(Workflow workflow) {
+	public String performExecution(Workflow workflow) {
 		return "";		
 	}
 }

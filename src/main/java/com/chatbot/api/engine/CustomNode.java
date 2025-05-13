@@ -23,7 +23,7 @@ public class CustomNode extends WorkflowNode
 	private String function;
 	
 	@Override
-	public String PerformExecution(Workflow workflow) {
+	public String performExecution(Workflow workflow) {
 		return "";
 	}
 }

@@ -18,7 +18,7 @@ public class InputNode extends WorkflowNode {
     private String prompt;
     
     @Override
-	public String PerformExecution(Workflow workflow) {
+	public String performExecution(Workflow workflow) {
     	return "";		
 	}
 }

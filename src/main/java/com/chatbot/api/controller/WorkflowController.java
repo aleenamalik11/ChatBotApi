@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.chatbot.api.engine.WorkflowEngine;
 import com.chatbot.api.models.User;
 import com.chatbot.api.models.Workflow;
 import com.chatbot.api.services.UserService;
@@ -22,6 +23,9 @@ public class WorkflowController {
 	
 	@Autowired
     private WorkflowService workflowService;
+	
+	@Autowired
+    private WorkflowEngine workflowEngine;
 
     @GetMapping
     public List<Workflow> getAllWorkflows() {
@@ -36,5 +40,10 @@ public class WorkflowController {
     @PostMapping
     public void createWorkflow(@RequestBody Workflow workflow) {
         workflowService.saveWorkflow(workflow);
+    }
+    
+    @PostMapping("/{name}")
+    public void startWorkflow(@PathVariable String name) {
+    	workflowEngine.StartEngine(name);
     }
 }

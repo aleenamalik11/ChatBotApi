@@ -26,7 +26,7 @@ public class ConditionNode extends WorkflowNode
 	private Map<String, Object> inputs;
 	
 	@Override
-	public String PerformExecution(Workflow workflow) {
+	public String performExecution(Workflow workflow) {
 		return "";		
 	}
 }

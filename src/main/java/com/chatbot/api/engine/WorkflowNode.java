@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 	})
 public abstract class WorkflowNode {
 	
-	public abstract String PerformExecution(Workflow workflow);
+	public abstract String performExecution(Workflow workflow);
 	
 	public String getNextNode(String node, String resultKey, Map<String, Map<String, String>> connections) {
 		
