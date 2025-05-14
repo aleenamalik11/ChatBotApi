@@ -1,5 +1,7 @@
 package com.chatbot.api.engine;
 
+import java.util.Map;
+
 import org.springframework.data.annotation.TypeAlias;
 
 import com.chatbot.api.models.Workflow;
@@ -21,6 +23,7 @@ public class CustomNode extends WorkflowNode
 {
 
 	private String function;
+	private Map<String, Object> inputs;
 	
 	@Override
 	public String performExecution(Workflow workflow) {
