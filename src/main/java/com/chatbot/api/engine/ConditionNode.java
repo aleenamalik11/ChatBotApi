@@ -3,6 +3,9 @@ package com.chatbot.api.engine;
 import java.util.Map;
 
 import org.springframework.data.annotation.TypeAlias;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
+import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import com.chatbot.api.models.Workflow;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
@@ -27,6 +30,14 @@ public class ConditionNode extends WorkflowNode
 	
 	@Override
 	public String performExecution(Workflow workflow) {
-		return "";		
+		
+		ExpressionParser parser = new SpelExpressionParser();
+        StandardEvaluationContext context = new StandardEvaluationContext();
+
+        context.setVariables(inputs);
+        
+        boolean result = parser.parseExpression(expression).getValue(context, Boolean.class);
+		
+        return result ?	"success" : "failure";
 	}
 }
