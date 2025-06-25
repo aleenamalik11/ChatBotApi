@@ -33,7 +33,7 @@ public class CustomNode extends WorkflowNode
 	public String performExecution(Workflow workflow) {
 		
 		// Scan package where your workflow classes are located
-        Reflections reflections = new Reflections("com.example.workflow"); // your package here
+        Reflections reflections = new Reflections("com.chatbot.customservices"); // your package here
 
         // Get all classes in the package
         Set<Class<?>> allClasses = reflections.getSubTypesOf(Object.class);
