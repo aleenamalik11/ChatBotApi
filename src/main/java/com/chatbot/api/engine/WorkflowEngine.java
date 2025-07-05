@@ -16,7 +16,8 @@ public class WorkflowEngine {
         String currentNode = "start";
         Workflow workflow = workflowService.getWorkflowByName(workflowName);
                 
-        while(!currentNode.equals("done") || currentNode != null) {
+        while(currentNode != null && !currentNode.equals("done")) 
+        {
         	WorkflowNode node = workflow.nodes.get(currentNode);
         	
         	if (node == null) throw new RuntimeException("Node not found: " + currentNode);

@@ -1,5 +1,6 @@
 package com.chatbot.api.models;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -34,5 +35,6 @@ public class Workflow {
 	@Field(targetType = FieldType.IMPLICIT) 
     public Map<String, WorkflowNode> nodes; 
 	@Schema(description = "connections")
-    public Map<String, Map<String, String>> connections; 
+    public Map<String, Map<String, String>> connections; 	
+	public Map<String, Object> inputs = new HashMap<>();
 }

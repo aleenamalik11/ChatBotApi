@@ -1,5 +1,6 @@
 package com.chatbot.api.engine;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -19,7 +20,6 @@ import lombok.NoArgsConstructor;
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
 public class InputNode extends WorkflowNode {
     private String prompt;
-    private Map<String, Object> inputs;
     
     @Override
 	public String performExecution(Workflow workflow) {
@@ -34,7 +34,7 @@ public class InputNode extends WorkflowNode {
             if (prompt.toLowerCase().contains(variable.toLowerCase())) {
                 System.out.print(variable + ": ");
                 String input = scanner.nextLine();
-                inputs.put(variable, input);
+                workflow.inputs.put(variable, input);
             }
         }
 

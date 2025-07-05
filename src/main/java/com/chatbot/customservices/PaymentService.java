@@ -4,7 +4,7 @@ import com.stripe.exception.StripeException;
 import com.stripe.model.PaymentIntent;
 import com.stripe.param.PaymentIntentCreateParams;
 
-public class WorkflowPaymentService {
+public class PaymentService {
 
 	public String createPaymentIntent(Long amount, String currency) throws StripeException {
         PaymentIntentCreateParams params = PaymentIntentCreateParams.builder()

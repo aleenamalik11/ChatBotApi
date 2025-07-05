@@ -14,8 +14,8 @@ import org.springframework.web.bind.annotation.RestController;
 import com.chatbot.api.engine.WorkflowEngine;
 import com.chatbot.api.models.User;
 import com.chatbot.api.models.Workflow;
-import com.chatbot.api.services.UserService;
 import com.chatbot.api.services.WorkflowService;
+import com.chatbot.customservices.UserService;
 
 @RestController
 @RequestMapping("/api/workflows")

@@ -1,6 +1,7 @@
 package com.chatbot.api.engine;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.expression.ExpressionParser;
@@ -26,7 +27,6 @@ public class ConditionNode extends WorkflowNode
 {
 
 	private String expression;
-	private Map<String, Object> inputs;
 	
 	@Override
 	public String performExecution(Workflow workflow) {
@@ -34,7 +34,7 @@ public class ConditionNode extends WorkflowNode
 		ExpressionParser parser = new SpelExpressionParser();
         StandardEvaluationContext context = new StandardEvaluationContext();
 
-        context.setVariables(inputs);
+        context.setVariables(workflow.inputs);
         
         boolean result = parser.parseExpression(expression).getValue(context, Boolean.class);
 		

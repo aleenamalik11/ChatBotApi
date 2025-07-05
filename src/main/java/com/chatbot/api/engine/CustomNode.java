@@ -6,9 +6,20 @@ import java.util.Map;
 import java.util.Set;
 
 import org.reflections.Reflections;
+import org.reflections.scanners.Scanners;
+import org.reflections.util.ClasspathHelper;
+import org.reflections.util.ConfigurationBuilder;
+import org.reflections.util.FilterBuilder;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.ClassPathScanningCandidateComponentProvider;
+import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.data.annotation.TypeAlias;
+import org.springframework.stereotype.Component;
 
 import com.chatbot.api.models.Workflow;
+import com.chatbot.api.services.SpringUtils;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 import lombok.Getter;
@@ -22,55 +33,44 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @TypeAlias("custom_logic")
+@Component
 @JsonAutoDetect(fieldVisibility = JsonAutoDetect.Visibility.ANY)
-public class CustomNode extends WorkflowNode
-{
-
-	private String function;
-	private Map<String, Object> inputs;
-	
-	@Override
-	public String performExecution(Workflow workflow) {
-		
-		// Scan package where your workflow classes are located
-        Reflections reflections = new Reflections("com.chatbot.customservices"); // your package here
-
-        // Get all classes in the package
-        Set<Class<?>> allClasses = reflections.getSubTypesOf(Object.class);
-
-        for (Class<?> clazz : allClasses) {
-            if (clazz.getSimpleName().startsWith("workflow")) {
-                System.out.println("Found: " + clazz.getSimpleName());
-
-                Object instance = null;
-				try {
-					instance = clazz.getDeclaredConstructor().newInstance();
-				} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-						| InvocationTargetException | NoSuchMethodException | SecurityException e1) {
-					// TODO Auto-generated catch block
-					e1.printStackTrace();
-				}
-
+public class CustomNode extends WorkflowNode {
+    
+    private String function;
+    
+    @Override
+    public String performExecution(Workflow workflow) {
+        try {
+            ClassPathScanningCandidateComponentProvider scanner =
+                    new ClassPathScanningCandidateComponentProvider(false);
+            scanner.addIncludeFilter(new AssignableTypeFilter(Object.class));
+            Set<BeanDefinition> candidates = scanner.findCandidateComponents("com.chatbot.customservices");
+            
+            for (BeanDefinition bean : candidates) {
+                Class<?> clazz = Class.forName(bean.getBeanClassName());
+                System.out.println("Spring found: " + clazz.getName());
+                
                 try {
-                    Method method = clazz.getMethod(function); // assumes no args
-                    try {
-						method.invoke(instance);
-					} catch (IllegalAccessException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (IllegalArgumentException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					} catch (InvocationTargetException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
+                    Method method = clazz.getDeclaredMethod(function, Map.class);
+                    
+                    // Use static context instead of @Autowired
+                    Object instance = SpringUtils.getBean(clazz);
+                    method.invoke(instance, workflow.inputs);
+                    
+                    System.out.println("Successfully invoked " + function + " method");
+                    break;
                 } catch (NoSuchMethodException e) {
                     System.out.println("Method not found: " + function + " in " + clazz.getSimpleName());
+                } catch (Exception e) {
+                    System.out.println("Error invoking method: " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
+            
+            return "success";
+        } catch (Exception ex) {
+            return "failure";
         }
-    
-		return "";
-	}
+    }
 }
