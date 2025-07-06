@@ -29,7 +29,7 @@ public class Workflow {
 	@Schema(description = "version", example = "abc123")
     public String version;
 	@Schema(description = "input vars")
-    public List<String> inputVariables;
+    public List<WorkflowInput> inputVariables;
 	@Schema(description = "nodes")
 	@JsonDeserialize(contentAs = WorkflowNode.class)
 	@Field(targetType = FieldType.IMPLICIT) 

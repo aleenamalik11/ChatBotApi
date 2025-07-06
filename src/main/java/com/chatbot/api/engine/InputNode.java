@@ -4,9 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
+import org.springframework.core.convert.ConversionService;
+import org.springframework.core.convert.support.DefaultConversionService;
 import org.springframework.data.annotation.TypeAlias;
 
 import com.chatbot.api.models.Workflow;
+import com.chatbot.api.models.WorkflowInput;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 import lombok.AllArgsConstructor;
@@ -30,14 +33,22 @@ public class InputNode extends WorkflowNode {
         Scanner scanner = new Scanner(System.in);
         System.out.println(prompt);
 
-        for (String variable : workflow.inputVariables) {
-            if (prompt.toLowerCase().contains(variable.toLowerCase())) {
-                System.out.print(variable + ": ");
-                String input = scanner.nextLine();
-                workflow.inputs.put(variable, input);
-            }
+        try {        	
+        
+	        for (WorkflowInput variable : workflow.inputVariables) {
+	            if (prompt.toLowerCase().contains(variable.name.toLowerCase())) {
+	                System.out.print(variable + ": ");
+	                String input = scanner.nextLine();
+	
+	                ConversionService conversionService = new DefaultConversionService();
+	                Object convertedInput = conversionService.convert(input, Class.forName(variable.type));
+	                workflow.inputs.put(variable.name, convertedInput);
+	            }
+	        }
         }
-
+        catch(Exception ex) {
+        	
+        }
         return "success";
 	}
 }
