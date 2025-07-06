@@ -38,7 +38,7 @@ public class InputNode extends WorkflowNode {
         
 	        for (WorkflowInput variable : workflow.inputVariables) {
 	            if (prompt.toLowerCase().contains(variable.name.toLowerCase())) {
-	                System.out.print(variable + ": ");
+	                System.out.print(variable.name + ": ");
 	                String input = scanner.nextLine();
 	
 	                Object convertedInput = RuntimeTypeConverterUtils.castToRuntimeType(input, variable.type);
