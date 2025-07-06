@@ -10,6 +10,7 @@ import org.springframework.data.annotation.TypeAlias;
 
 import com.chatbot.api.models.Workflow;
 import com.chatbot.api.models.WorkflowInput;
+import com.chatbot.api.utils.RuntimeTypeConverterUtils;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 import lombok.AllArgsConstructor;
@@ -40,8 +41,7 @@ public class InputNode extends WorkflowNode {
 	                System.out.print(variable + ": ");
 	                String input = scanner.nextLine();
 	
-	                ConversionService conversionService = new DefaultConversionService();
-	                Object convertedInput = conversionService.convert(input, Class.forName(variable.type));
+	                Object convertedInput = RuntimeTypeConverterUtils.castToRuntimeType(input, variable.type);
 	                workflow.inputs.put(variable.name, convertedInput);
 	            }
 	        }

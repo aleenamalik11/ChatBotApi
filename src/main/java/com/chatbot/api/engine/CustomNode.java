@@ -19,7 +19,7 @@ import org.springframework.data.annotation.TypeAlias;
 import org.springframework.stereotype.Component;
 
 import com.chatbot.api.models.Workflow;
-import com.chatbot.api.services.SpringUtils;
+import com.chatbot.api.utils.SpringUtils;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 import lombok.Getter;
