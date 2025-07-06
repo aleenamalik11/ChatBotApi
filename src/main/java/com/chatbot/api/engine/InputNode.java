@@ -47,7 +47,7 @@ public class InputNode extends WorkflowNode {
 	        }
         }
         catch(Exception ex) {
-        	
+        	 return "failure";
         }
         return "success";
 	}
