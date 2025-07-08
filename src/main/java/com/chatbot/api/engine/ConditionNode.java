@@ -1,8 +1,5 @@
 package com.chatbot.api.engine;
 
-import java.util.Map;
-import java.util.stream.Collectors;
-
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
@@ -11,14 +8,13 @@ import org.springframework.expression.spel.support.StandardEvaluationContext;
 import com.chatbot.api.models.Workflow;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
-import lombok.Getter;
-
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.Getter;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 @TypeAlias("condition")

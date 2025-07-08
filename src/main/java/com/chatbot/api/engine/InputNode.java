@@ -12,9 +12,11 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 @Data
+@EqualsAndHashCode(callSuper = false)
 @NoArgsConstructor
 @AllArgsConstructor
 @TypeAlias("input")
@@ -46,6 +48,8 @@ public class InputNode extends WorkflowNode {
 	                workflow.inputs.put(variable.name, convertedInput);
 	            }
 	        }
+	        
+	        scanner.close();
         }
         catch(Exception ex) {
         	 return "failure";

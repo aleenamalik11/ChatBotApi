@@ -5,9 +5,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.chatbot.api.models.User;
 import com.chatbot.api.models.Workflow;
-import com.chatbot.api.repo.UserRepo;
 import com.chatbot.api.repo.WorkflowRepo;
 
 @Service
