@@ -15,21 +15,7 @@ public class UserService {
     @Autowired
     private UserRepo repository;
 
-    public void saveUser(Map<String, Object> inputs) {
-    	User user = new User();
-
-        if (inputs.get("name") != null) {
-            user.setName(inputs.get("name").toString());
-        }
-
-        if (inputs.get("age") != null) {
-            Object ageObj = inputs.get("age");
-            int age = (ageObj instanceof Number)
-                ? ((Number) ageObj).intValue()
-                : Integer.parseInt(ageObj.toString());
-            user.setAge(age);
-        }
-        
+    public void saveUser(User user) {
         repository.save(user);
     }
     public User getUser(String id) {
