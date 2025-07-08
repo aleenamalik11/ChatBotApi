@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import com.chatbot.api.models.Workflow;
 import com.chatbot.api.models.WorkflowInput;
-import com.chatbot.api.utils.RuntimeTypeConverterUtils;
+import com.chatbot.api.utils.RuntimeTypeConverter;
 import com.chatbot.api.utils.SpringBeanProvider;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
@@ -40,7 +40,7 @@ public class InputNode extends WorkflowNode {
 	                System.out.print(variable.name + ": ");
 	                String input = scanner.nextLine();
 	
-	                RuntimeTypeConverterUtils converterUtils = SpringBeanProvider.getConverterUtils();
+	                RuntimeTypeConverter converterUtils = SpringBeanProvider.getConverterUtils();
 	                
 	                Object convertedInput = converterUtils.castToRuntimeType(input, variable.type);
 	                workflow.inputs.put(variable.name, convertedInput);

@@ -11,7 +11,7 @@ import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.data.annotation.TypeAlias;
 
 import com.chatbot.api.models.Workflow;
-import com.chatbot.api.utils.RuntimeTypeConverterUtils;
+import com.chatbot.api.utils.RuntimeTypeConverter;
 import com.chatbot.api.utils.SpringBeanProvider;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 
@@ -80,7 +80,7 @@ public class CustomNode extends WorkflowNode {
 	            // Try to get value from inputs map
 	            Object value = inputs.get(paramName);
 
-	            RuntimeTypeConverterUtils converterUtils = SpringBeanProvider.getConverterUtils();
+	            RuntimeTypeConverter converterUtils = SpringBeanProvider.getConverterUtils();
 	            // If value is null and type is a complex object, try converting the whole map
 	            if (value == null && !isSimple(paramType)) {
 	                value = converterUtils.castToRuntimeType(inputs, paramType);

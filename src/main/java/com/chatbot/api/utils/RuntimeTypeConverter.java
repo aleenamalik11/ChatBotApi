@@ -9,7 +9,7 @@ import org.springframework.stereotype.Component;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
-public class RuntimeTypeConverterUtils {
+public class RuntimeTypeConverter {
     
     // Remove static and fix injection
     @Autowired
