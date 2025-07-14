@@ -24,7 +24,6 @@ public class MethodInvoker {
     
     // Instance caches - can be managed by Spring
     private final Map<String, List<MethodDetails>> methodCache = new ConcurrentHashMap<>();
-    private final Map<String, Set<BeanDefinition>> packageCache = new ConcurrentHashMap<>();
     
     // Thread-local scanner to avoid creating new instances
     private final ThreadLocal<ClassPathScanningCandidateComponentProvider> scannerCache = 
@@ -147,10 +146,8 @@ public class MethodInvoker {
     }
     
     private List<MethodDetails> scanAndCacheMethods(String function, String packageName) throws Exception {
-        Set<BeanDefinition> candidates = packageCache.computeIfAbsent(packageName, pkg -> {
-            ClassPathScanningCandidateComponentProvider scanner = scannerCache.get();
-            return scanner.findCandidateComponents(pkg);
-        });
+         ClassPathScanningCandidateComponentProvider scanner = scannerCache.get();
+         Set<BeanDefinition> candidates = scanner.findCandidateComponents(packageName);
         
         List<MethodDetails> methods = new ArrayList<>();
         String cacheKey = packageName + ":" + function;
@@ -230,14 +227,12 @@ public class MethodInvoker {
     // Method to clear cache if needed (useful for testing or dynamic reloading)
     public void clearCache() {
         methodCache.clear();
-        packageCache.clear();
     }
     
     // Method to get cache statistics (useful for monitoring)
     public Map<String, Integer> getCacheStats() {
         return Map.of(
-            "methodCacheSize", methodCache.size(),
-            "packageCacheSize", packageCache.size()
+            "methodCacheSize", methodCache.size()
         );
     }
     
