@@ -74,7 +74,6 @@ public class MethodInvoker {
                 return Integer.compare(diff1, diff2);
             });
             
-            Exception lastException = null;
             for (MethodDetails methodInfo : methods) {
                 try {
                     MethodResult result = invokeMethod(methodInfo, inputs, function);
@@ -82,19 +81,17 @@ public class MethodInvoker {
                         return result;
                     }
                 } catch (Exception e) {
-                    lastException = e;
                     System.out.println("Error invoking method " + methodInfo.getMethodSignature() + ": " + e.getMessage());
                     // Continue to try next method
                 }
             }
             
             // If we get here, all methods failed
-            String errorMsg = lastException != null ? lastException.getMessage() : "Unknown error";
-            return new MethodResult(null, "All method invocations failed. Last error: " + errorMsg);
+            return new MethodResult(null, "failure");
             
         } catch (Exception ex) {
             ex.printStackTrace();
-            return new MethodResult(null, "failure: " + ex.getMessage());
+            return new MethodResult(null, "failure");
         }
     }
     
