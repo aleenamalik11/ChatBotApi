@@ -11,7 +11,7 @@ import org.springframework.expression.ExpressionParser;
 import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
-import com.chatbot.api.models.MethodResult;
+import com.chatbot.api.dto.MethodResult;
 import com.chatbot.api.utils.MethodInvoker;
 
 public class DSLInterpretor {

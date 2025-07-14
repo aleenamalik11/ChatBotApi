@@ -1,4 +1,4 @@
-package com.chatbot.api.models;
+package com.chatbot.api.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

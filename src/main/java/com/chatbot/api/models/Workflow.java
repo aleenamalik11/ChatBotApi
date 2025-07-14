@@ -7,6 +7,7 @@ import java.util.Map;
 import org.springframework.data.mongodb.core.mapping.Field;
 import org.springframework.data.mongodb.core.mapping.FieldType;
 
+import com.chatbot.api.dto.WorkflowInput;
 import com.chatbot.api.engine.WorkflowNode;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;

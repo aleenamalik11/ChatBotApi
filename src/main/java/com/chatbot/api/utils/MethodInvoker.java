@@ -14,8 +14,8 @@ import org.springframework.context.annotation.ClassPathScanningCandidateComponen
 import org.springframework.core.type.filter.AssignableTypeFilter;
 import org.springframework.stereotype.Service;
 
-import com.chatbot.api.models.MethodDetails;
-import com.chatbot.api.models.MethodResult;
+import com.chatbot.api.dto.MethodDetails;
+import com.chatbot.api.dto.MethodResult;
 
 @Service
 public class MethodInvoker {

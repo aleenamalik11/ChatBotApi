@@ -1,4 +1,4 @@
-package com.chatbot.api.models;
+package com.chatbot.api.dto;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;

@@ -4,8 +4,8 @@ import java.util.Scanner;
 import org.springframework.data.annotation.TypeAlias;
 import org.springframework.stereotype.Component;
 
+import com.chatbot.api.dto.WorkflowInput;
 import com.chatbot.api.models.Workflow;
-import com.chatbot.api.models.WorkflowInput;
 import com.chatbot.api.utils.RuntimeTypeConverter;
 import com.chatbot.api.utils.SpringBeanProvider;
 import com.fasterxml.jackson.annotation.JsonAutoDetect;

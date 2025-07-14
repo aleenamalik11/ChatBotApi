@@ -2,7 +2,7 @@ package com.chatbot.api.engine;
 
 import org.springframework.data.annotation.TypeAlias;
 
-import com.chatbot.api.models.MethodResult;
+import com.chatbot.api.dto.MethodResult;
 import com.chatbot.api.models.Workflow;
 import com.chatbot.api.utils.MethodInvoker;
 import com.chatbot.api.utils.SpringBeanProvider;
