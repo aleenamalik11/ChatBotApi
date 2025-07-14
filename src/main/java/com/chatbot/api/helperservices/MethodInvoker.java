@@ -24,7 +24,6 @@ public class MethodInvoker {
     
     // Instance caches - can be managed by Spring
     private final Map<String, List<MethodDetails>> methodCache = new ConcurrentHashMap<>();
-    private final Map<String, MethodDetails> methodSignatureCache = new ConcurrentHashMap<>();
     private final Map<String, Set<BeanDefinition>> packageCache = new ConcurrentHashMap<>();
     
     // Thread-local scanner to avoid creating new instances
@@ -157,6 +156,7 @@ public class MethodInvoker {
         });
         
         List<MethodDetails> methods = new ArrayList<>();
+        String cacheKey = packageName + ":" + function;
         
         for (BeanDefinition bean : candidates) {
             Class<?> clazz = Class.forName(bean.getBeanClassName());
@@ -167,13 +167,12 @@ public class MethodInvoker {
                 if (method.getName().equals(function)) {
                     MethodDetails methodInfo = new MethodDetails(method, clazz);
                     methods.add(methodInfo);
-                    
-                    // Cache individual method by their actual signature
-                    String methodSignatureKey = packageName + ":" + methodInfo.getMethodSignature();
-                    methodSignatureCache.put(methodSignatureKey, methodInfo);
                 }
             }
         }
+        
+        // Cache the methods list for this function and package
+        methodCache.put(cacheKey, methods);
         
         return methods;
     }
@@ -234,7 +233,6 @@ public class MethodInvoker {
     // Method to clear cache if needed (useful for testing or dynamic reloading)
     public void clearCache() {
         methodCache.clear();
-        methodSignatureCache.clear();
         packageCache.clear();
     }
     
@@ -242,7 +240,6 @@ public class MethodInvoker {
     public Map<String, Integer> getCacheStats() {
         return Map.of(
             "methodCacheSize", methodCache.size(),
-            "methodSignatureCacheSize", methodSignatureCache.size(),
             "packageCacheSize", packageCache.size()
         );
     }
@@ -255,9 +252,5 @@ public class MethodInvoker {
             methods.forEach(method -> 
                 System.out.println("  - " + method.getMethodSignature()));
         });
-        
-        System.out.println("\n=== Method Signature Cache Info ===");
-        methodSignatureCache.forEach((key, method) -> 
-            System.out.println("Key: " + key + " -> " + method.getMethodSignature()));
     }
 }
