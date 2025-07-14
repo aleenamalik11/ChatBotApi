@@ -12,7 +12,7 @@ import org.springframework.expression.spel.standard.SpelExpressionParser;
 import org.springframework.expression.spel.support.StandardEvaluationContext;
 
 import com.chatbot.api.dto.MethodResult;
-import com.chatbot.api.utils.MethodInvoker;
+import com.chatbot.api.helperservices.MethodInvoker;
 
 public class DSLInterpretor {
 
