@@ -49,7 +49,6 @@ public class InputNode extends WorkflowNode {
 	            }
 	        }
 	        
-	        scanner.close();
         }
         catch(Exception ex) {
         	 return "failure";

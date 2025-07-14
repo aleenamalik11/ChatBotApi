@@ -41,6 +41,6 @@ public class WorkflowController {
     
     @PostMapping("/{name}")
     public void startWorkflow(@PathVariable String name) {
-    	workflowEngine.StartEngine(name);
+    	workflowEngine.startEngine(name);
     }
 }

@@ -22,4 +22,8 @@ public class SpringBeanProvider implements ApplicationContextAware {
     public static RuntimeTypeConverter getConverterUtils() {
         return applicationContext.getBean(RuntimeTypeConverter.class);
     }
+    
+    public static MethodInvoker getMethodInvoker() {
+        return applicationContext.getBean(MethodInvoker.class);
+    }
 }

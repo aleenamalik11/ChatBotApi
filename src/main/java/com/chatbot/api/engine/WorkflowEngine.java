@@ -12,7 +12,7 @@ public class WorkflowEngine {
 	@Autowired
     private WorkflowService workflowService;
 	
-	public void StartEngine(String workflowName) {
+	public void startEngine(String workflowName) {
         String currentNode = "start";
         Workflow workflow = workflowService.getWorkflowByName(workflowName);
                 
