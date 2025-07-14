@@ -39,20 +39,28 @@ public class MethodInvoker {
     
     public MethodResult invoke(Map<String, Object> inputs, String function, String packageName) {
         try {
-            // First, try to find exact method match by signature
-            MethodDetails exactMatch = findExactMethodMatch(inputs, function, packageName);
-            if (exactMatch != null) {
-                return invokeMethod(exactMatch, inputs, function);
-            }
-            
-            // Fallback: Get cached methods or scan and cache
+            // Get all methods with the same name first
             List<MethodDetails> methods = getMethodsFromCache(function, packageName);
             
             if (methods.isEmpty()) {
                 return new MethodResult(null, "Method not found: " + function);
             }
             
-            // Try each method with the same name, prioritizing by matching parameter names
+            // Find the method with the most matching parameter names
+            MethodDetails bestMatch = findBestMethodMatch(methods, inputs);
+            if (bestMatch != null) {
+                try {
+                    MethodResult result = invokeMethod(bestMatch, inputs, function);
+                    if ("success".equals(result.getResult())) {
+                        return result;
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error invoking best match method " + bestMatch.getMethodSignature() + ": " + e.getMessage());
+                    // Continue to try all methods if best match fails
+                }
+            }
+            
+            // Fallback: Try each method with the same name, prioritizing by matching parameter names
             methods.sort((m1, m2) -> {
                 int matches1 = countMatchingParameterNames(m1, inputs);
                 int matches2 = countMatchingParameterNames(m2, inputs);
@@ -72,8 +80,6 @@ public class MethodInvoker {
                 try {
                     MethodResult result = invokeMethod(methodInfo, inputs, function);
                     if ("success".equals(result.getResult())) {
-                        // Cache successful method for future calls
-                        cacheMethodByInputs(methodInfo, inputs, function, packageName);
                         return result;
                     }
                 } catch (Exception e) {
@@ -93,50 +99,33 @@ public class MethodInvoker {
         }
     }
     
-    private MethodDetails findExactMethodMatch(Map<String, Object> inputs, String function, String packageName) {
-        // Try exact input signature match first
-        String inputSignatureKey = createSignatureKey(inputs, function, packageName);
-        MethodDetails exactMatch = methodSignatureCache.get(inputSignatureKey);
-        if (exactMatch != null) {
-            return exactMatch;
+    private MethodDetails findBestMethodMatch(List<MethodDetails> methods, Map<String, Object> inputs) {
+        if (methods.isEmpty()) {
+            return null;
         }
         
-        // Try parameter count match as fallback
-        String paramCountKey = packageName + ":" + function + ":paramCount:" + inputs.size();
-        return methodSignatureCache.get(paramCountKey);
-    }
-    
-    private String createSignatureKey(Map<String, Object> inputs, String function, String packageName) {
-        // Try to match by parameter count and types if possible
-        StringBuilder sb = new StringBuilder();
-        sb.append(packageName).append(":").append(function).append("(");
+        MethodDetails bestMatch = null;
+        int maxMatches = -1;
         
-        // Sort input keys for consistent signature generation
-        List<String> sortedKeys = new ArrayList<>(inputs.keySet());
-        sortedKeys.sort(String::compareTo);
-        
-        for (int i = 0; i < sortedKeys.size(); i++) {
-            if (i > 0) sb.append(",");
-            Object value = inputs.get(sortedKeys.get(i));
-            if (value != null) {
-                sb.append(value.getClass().getSimpleName());
-            } else {
-                sb.append("null");
+        for (MethodDetails method : methods) {
+            int matches = countMatchingParameterNames(method, inputs);
+            
+            // If this method has more matching parameter names, it's our new best match
+            if (matches > maxMatches) {
+                maxMatches = matches;
+                bestMatch = method;
+            } else if (matches == maxMatches && bestMatch != null) {
+                // If tied on matching parameter names, prefer the one with parameter count closer to input size
+                int currentDiff = Math.abs(method.getParameters().length - inputs.size());
+                int bestDiff = Math.abs(bestMatch.getParameters().length - inputs.size());
+                
+                if (currentDiff < bestDiff) {
+                    bestMatch = method;
+                }
             }
         }
         
-        sb.append(")");
-        return sb.toString();
-    }
-    
-    private void cacheMethodByInputs(MethodDetails methodInfo, Map<String, Object> inputs, String function, String packageName) {
-        // Cache by input signature for faster future lookups with same input types
-        String inputSignatureKey = createSignatureKey(inputs, function, packageName);
-        methodSignatureCache.put(inputSignatureKey, methodInfo);
-        
-        // Also cache by parameter count for fallback matching
-        String paramCountKey = packageName + ":" + function + ":paramCount:" + methodInfo.getParameters().length;
-        methodSignatureCache.put(paramCountKey, methodInfo);
+        return bestMatch;
     }
     
     private MethodResult invokeMethod(MethodDetails methodInfo, Map<String, Object> inputs, String function) throws Exception {
@@ -182,10 +171,6 @@ public class MethodInvoker {
                     // Cache individual method by their actual signature
                     String methodSignatureKey = packageName + ":" + methodInfo.getMethodSignature();
                     methodSignatureCache.put(methodSignatureKey, methodInfo);
-                    
-                    // Also cache by parameter count for quick lookup
-                    String paramCountKey = packageName + ":" + function + ":paramCount:" + methodInfo.getParameters().length;
-                    methodSignatureCache.put(paramCountKey, methodInfo);
                 }
             }
         }
