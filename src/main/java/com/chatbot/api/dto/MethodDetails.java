@@ -9,29 +9,12 @@ import lombok.Setter;
 @Getter
 @Setter
 public class MethodDetails {
-	private Method method;
-    private Class<?> declaringClass;
-    private Parameter[] parameters;
-    private Class<?>[] parameterTypes;
-    private String methodSignature;
+	 private Method method;
+	 private Object bean;
     
-    public MethodDetails(Method method, Class<?> declaringClass) {
+    public MethodDetails(Method method, Object bean) {
         this.method = method;
-        this.declaringClass = declaringClass;
-        this.parameters = method.getParameters();
-        this.parameterTypes = method.getParameterTypes();
-        this.methodSignature = buildMethodSignature(method);
+        this.bean = bean;
     }
     
-    private String buildMethodSignature(Method method) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(method.getName()).append("(");
-        Class<?>[] types = method.getParameterTypes();
-        for (int i = 0; i < types.length; i++) {
-            if (i > 0) sb.append(",");
-            sb.append(types[i].getSimpleName());
-        }
-        sb.append(")");
-        return sb.toString();
-    }
 }

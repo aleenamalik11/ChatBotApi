@@ -5,13 +5,13 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.stereotype.Component;
+import org.springframework.util.ClassUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
 public class RuntimeTypeConverter {
     
-    // Remove static and fix injection
     @Autowired
     private ConversionService conversionService;
     
@@ -31,35 +31,40 @@ public class RuntimeTypeConverter {
         return value != null ? value.getClass() : null;
     }
     
-    @SuppressWarnings("unchecked")
-	private Object convert(Object value, Class<?> targetType) {
-        if (value == null) return getDefaultValue(targetType);
+    @SuppressWarnings({ "unchecked", "rawtypes" })
+	private Object convert(Object input, Class<?> targetType) {
+    	if (input == null) return getDefaultValue(targetType);
         
         // If already correct type, return as-is
-        if (targetType.isAssignableFrom(value.getClass())) {
-            return value;
+        if (targetType.isInstance(input.getClass())) {
+            return input;
         }
-        
         try {
-            // Use Spring's ConversionService for conversion
-            if (conversionService.canConvert(value.getClass(), targetType)) {
-                return conversionService.convert(value, targetType);
-            }
             
             // Handle Map to Object conversion for complex types
-            if (value instanceof Map && !targetType.isPrimitive() && !isWrapperType(targetType)) {
-                return convertMapToObject((Map<String, Object>) value, targetType);
+        	if (input instanceof Map<?, ?> &&
+        		    !targetType.isPrimitive() &&
+        		    !ClassUtils.isPrimitiveOrWrapper(targetType) &&
+        		    targetType != String.class)  {
+                return convertMapToObject((Map<String, Object>) input, targetType);
             }
             
-            // Fallback to string conversion if ConversionService can't handle it
-            if (conversionService.canConvert(String.class, targetType)) {
-                return conversionService.convert(value.toString(), targetType);
+            if (targetType.isEnum()) {
+                return Enum.valueOf((Class<Enum>) targetType, input.toString());
             }
             
-            throw new IllegalArgumentException("Cannot convert " + value.getClass() + " to " + targetType);
+        	// Use Spring's ConversionService for conversion
+            if (conversionService.canConvert(input.getClass(), targetType)) {
+                return conversionService.convert(input, targetType);
+            }
             
+            throw new IllegalArgumentException(
+            	    "Cannot convert " + input.getClass().getName() +
+            	    " to " + targetType.getName()
+            	);
+                        
         } catch (Exception e) {
-            throw new RuntimeException("Type conversion failed for value: " + value + " to type: " + targetType, e);
+            throw new RuntimeException("Type conversion failed for value: " + input + " to type: " + targetType, e);
         }
     }
     
@@ -70,12 +75,7 @@ public class RuntimeTypeConverter {
             throw new RuntimeException("Cannot convert map to " + targetType.getSimpleName(), e);
         }
     }
-    
-    private boolean isWrapperType(Class<?> type) {
-        return type == Boolean.class || type == Integer.class || type == Character.class ||
-               type == Byte.class || type == Short.class || type == Double.class ||
-               type == Long.class || type == Float.class || type == String.class;
-    }
+
     
     private Object getDefaultValue(Class<?> type) {
         if (type.isPrimitive()) {

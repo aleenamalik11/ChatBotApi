@@ -28,7 +28,7 @@ public class CustomNode extends WorkflowNode {
     public String performExecution(Workflow workflow) {
     	MethodInvoker methodInvoker = SpringBeanProvider.getMethodInvoker();
     	
-    	MethodResult result =  methodInvoker.invoke(workflow.inputs, function, "com.chatbot.customservices");
+    	MethodResult result =  methodInvoker.invoke(workflow.inputs, function);
     	
     	output = result.getOutput();
     	
