@@ -1,4 +1,4 @@
-package com.chatbot.api.helperservices;
+package com.chatbot.api.utils;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Map;

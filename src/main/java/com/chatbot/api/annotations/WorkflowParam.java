@@ -1,4 +1,4 @@
-package com.chatbot.api.helperservices;
+package com.chatbot.api.annotations;
 import java.lang.annotation.Retention;
 import java.lang.annotation.Target;
 import java.lang.annotation.RetentionPolicy;

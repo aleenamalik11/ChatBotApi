@@ -1,4 +1,4 @@
-package com.chatbot.api.helperservices;
+package com.chatbot.api.utils;
 
 public interface BeanResolver {
 

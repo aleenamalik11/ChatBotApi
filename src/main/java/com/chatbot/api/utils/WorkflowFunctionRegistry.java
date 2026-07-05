@@ -1,4 +1,4 @@
-package com.chatbot.api.helperservices;
+package com.chatbot.api.utils;
 
 import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
@@ -14,6 +14,8 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.stereotype.Service;
 
+import com.chatbot.api.annotations.WorkflowFunction;
+import com.chatbot.api.annotations.WorkflowParam;
 import com.chatbot.api.dto.MethodDetails;
 import com.chatbot.api.dto.ParameterMetadata;
 
@@ -101,11 +103,6 @@ public class WorkflowFunctionRegistry {
             }
 
             String parameterName = workflowParam.name().trim();
-            if (!parameterNames.add(parameterName)) {
-                throw new IllegalStateException(
-                    "Duplicate workflow parameter name '" + parameterName +
-                    "' for command '" + command + "' on " + describe(method, beanName));
-            }
 
             Type genericType = parameter.getParameterizedType();
             if (!isSupportedParameterType(genericType)) {
