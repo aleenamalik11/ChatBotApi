@@ -1,26 +1,24 @@
 package com.chatbot.api.helperservices;
 
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Parameter;
 import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
 import com.chatbot.api.dto.MethodDetails;
 import com.chatbot.api.dto.MethodResult;
-import com.chatbot.api.utils.RuntimeTypeConverter;
 
 @Service
 public class MethodInvoker {
 	
-	private final RuntimeTypeConverter converter;
 	private final WorkflowFunctionRegistry registry;
 	private final BeanResolver beanResolver;
+    private final MethodArgumentResolver argumentResolver;
 
-	public MethodInvoker(RuntimeTypeConverter converter, WorkflowFunctionRegistry registry, BeanResolver beanResolver) {
-	    this.converter = converter;
+	public MethodInvoker(WorkflowFunctionRegistry registry, BeanResolver beanResolver, MethodArgumentResolver argumentResolver) {
 	    this.registry = registry;
 	    this.beanResolver = beanResolver;
+        this.argumentResolver = argumentResolver;
 	}
 
     
@@ -46,7 +44,7 @@ public class MethodInvoker {
     private MethodResult invokeMethod(MethodDetails methodDetails, Map<String, Object> inputs) throws Exception {
     	Object instance = beanResolver.getBean(methodDetails.getBeanName());
 
-        Object[] args = prepareMethodArguments(methodDetails, inputs);
+        Object[] args = argumentResolver.resolve(methodDetails, inputs);
         Object output;
         try {
             output = methodDetails.getMethod().invoke(instance, args);
@@ -60,40 +58,6 @@ public class MethodInvoker {
         
         System.out.println("Successfully invoked " + methodDetails.getMethod().getName());
         return new MethodResult(output, "success");
-    }
-    
-    
-    
-    private Object[] prepareMethodArguments(MethodDetails methodDetails, Map<String, Object> inputs) {
-        Parameter[] parameters = methodDetails.getMethod().getParameters();
-        Object[] args = new Object[parameters.length];
-        
-        try {
-            
-            for (int i = 0; i < parameters.length; i++) {
-                Parameter param = parameters[i];
-                Class<?> paramType = param.getType();
-                WorkflowParam annotation = param.getAnnotation(WorkflowParam.class);
-
-                if (annotation == null) {
-                    throw new IllegalStateException(
-                        "Parameter '" + param.getName() + "' must have @WorkflowParam."
-                    );
-                }
-
-                if (inputs == null || !inputs.containsKey(annotation.name())) {
-                    throw new IllegalArgumentException(
-                        "Missing input '" + annotation.name() + "' for parameter '" + param.getName() + "'."
-                    );
-                }
-
-                args[i] = converter.castToRuntimeType(inputs.get(annotation.name()), paramType);
-            }
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to prepare method arguments", ex);
-        }
-        
-        return args;
     }
     
     private MethodResult failure(String command, String rootCause) {

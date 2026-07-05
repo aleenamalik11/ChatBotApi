@@ -1,8 +1,11 @@
 package com.chatbot.api.helperservices;
 
+import java.lang.reflect.GenericArrayType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.Map;
@@ -12,6 +15,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.springframework.stereotype.Service;
 
 import com.chatbot.api.dto.MethodDetails;
+import com.chatbot.api.dto.ParameterMetadata;
 
 import jakarta.annotation.PostConstruct;
 
@@ -54,7 +58,7 @@ public class WorkflowFunctionRegistry {
                     continue;
 
                 String command = wf.name().trim();
-                validateWorkflowFunction(command, method, beanName);
+                ParameterMetadata[] parameters = validateWorkflowFunction(command, method, beanName);
 
                 if (methodCache.containsKey(command)) {
                     throw new IllegalStateException(
@@ -65,13 +69,13 @@ public class WorkflowFunctionRegistry {
 
                 methodCache.put(
                     command,
-                    new MethodDetails(method, beanName)
+                    new MethodDetails(method, beanName, parameters)
                 );
             }
         }
     }
 
-    private void validateWorkflowFunction(String command, Method method, String beanName) {
+    private ParameterMetadata[] validateWorkflowFunction(String command, Method method, String beanName) {
         if (command.isBlank()) {
             throw new IllegalStateException(
                 "Workflow command name cannot be blank on " + describe(method, beanName));
@@ -84,8 +88,11 @@ public class WorkflowFunctionRegistry {
                 describe(method, beanName) + ": method must be public, concrete, and non-static.");
         }
 
+        Parameter[] methodParameters = method.getParameters();
+        ParameterMetadata[] parameterMetadata = new ParameterMetadata[methodParameters.length];
         Set<String> parameterNames = new HashSet<>();
-        for (Parameter parameter : method.getParameters()) {
+        for (int i = 0; i < methodParameters.length; i++) {
+            Parameter parameter = methodParameters[i];
             WorkflowParam workflowParam = parameter.getAnnotation(WorkflowParam.class);
             if (workflowParam == null || workflowParam.name().trim().isBlank()) {
                 throw new IllegalStateException(
@@ -100,15 +107,66 @@ public class WorkflowFunctionRegistry {
                     "' for command '" + command + "' on " + describe(method, beanName));
             }
 
-            if (!isSupportedParameterType(parameter.getType())) {
+            Type genericType = parameter.getParameterizedType();
+            if (!isSupportedParameterType(genericType)) {
                 throw new IllegalStateException(
-                    "Unsupported workflow parameter type '" + parameter.getType().getName() +
+                    "Unsupported workflow parameter type '" + genericType.getTypeName() +
                     "' for parameter '" + parameterName + "' on command '" + command + "'.");
             }
+
+            parameterMetadata[i] = new ParameterMetadata(
+                parameterName,
+                parameter.getName(),
+                parameter.getType(),
+                genericType
+            );
         }
+
+        return parameterMetadata;
     }
 
-    private boolean isSupportedParameterType(Class<?> type) {
+    private boolean isSupportedParameterType(Type type) {
+        if (type instanceof Class<?> clazz) {
+            return isSupportedClass(clazz);
+        }
+
+        if (type instanceof GenericArrayType genericArrayType) {
+            return isSupportedParameterType(genericArrayType.getGenericComponentType());
+        }
+
+        if (type instanceof ParameterizedType parameterizedType) {
+            Class<?> rawType = rawClass(parameterizedType);
+            if (rawType == null) {
+                return false;
+            }
+
+            if (Collection.class.isAssignableFrom(rawType)) {
+                Type[] typeArguments = parameterizedType.getActualTypeArguments();
+                return typeArguments.length == 1 && isSupportedParameterType(typeArguments[0]);
+            }
+
+            if (Map.class.isAssignableFrom(rawType)) {
+                Type[] typeArguments = parameterizedType.getActualTypeArguments();
+                return typeArguments.length == 2 &&
+                       typeArguments[0].equals(String.class) &&
+                       isSupportedParameterType(typeArguments[1]);
+            }
+
+            return isSupportedClass(rawType);
+        }
+
+        return false;
+    }
+
+    private boolean isSupportedClass(Class<?> type) {
+        if (type.isArray()) {
+            return isSupportedParameterType(type.getComponentType());
+        }
+
+        if (Collection.class.isAssignableFrom(type) || Map.class.isAssignableFrom(type)) {
+            return false;
+        }
+
         if (type.isPrimitive() ||
             type.equals(String.class) ||
             Number.class.isAssignableFrom(type) ||
@@ -118,12 +176,18 @@ public class WorkflowFunctionRegistry {
             return true;
         }
 
-        return !type.isArray() &&
-               !type.equals(Object.class) &&
+        return !type.equals(Object.class) &&
                !type.isInterface() &&
-               !Modifier.isAbstract(type.getModifiers()) &&
-               !Collection.class.isAssignableFrom(type) &&
-               !Map.class.isAssignableFrom(type);
+               !Modifier.isAbstract(type.getModifiers());
+    }
+
+    private Class<?> rawClass(ParameterizedType type) {
+        Type rawType = type.getRawType();
+        if (rawType instanceof Class<?> rawClass) {
+            return rawClass;
+        }
+
+        return null;
     }
 
     private String describe(Method method, String beanName) {

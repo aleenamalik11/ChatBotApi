@@ -1,12 +1,18 @@
 package com.chatbot.api.utils;
 
+import java.lang.reflect.Array;
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.LinkedHashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.convert.ConversionService;
 import org.springframework.stereotype.Component;
-import org.springframework.util.ClassUtils;
 
+import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Component
@@ -23,7 +29,11 @@ public class RuntimeTypeConverter {
         return convert(input, Class.forName(type));
     }
     
-    public Object castToRuntimeType(Object input, Class<?> type) throws ClassNotFoundException {
+    public Object castToRuntimeType(Object input, Class<?> type) {
+        return convert(input, type);
+    }
+
+    public Object castToRuntimeType(Object input, Type type) {
         return convert(input, type);
     }
     
@@ -31,49 +41,140 @@ public class RuntimeTypeConverter {
         return value != null ? value.getClass() : null;
     }
     
+	private Object convert(Object input, Type targetType) {
+        return convert(input, objectMapper.getTypeFactory().constructType(targetType));
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
-	private Object convert(Object input, Class<?> targetType) {
-    	if (input == null) return getDefaultValue(targetType);
-        
-        // If already correct type, return as-is
-        if (targetType.isInstance(input)) {
+	private Object convert(Object input, JavaType targetType) {
+        Class<?> rawType = targetType.getRawClass();
+
+    	if (input == null) {
+            return getDefaultValue(rawType);
+        }
+
+        if (rawType.isInstance(input) && !targetType.isContainerType() && !rawType.isArray()) {
             return input;
         }
+
         try {
-            
-            // Handle Map to Object conversion for complex types
-        	if (input instanceof Map<?, ?> &&
-        		    !targetType.isPrimitive() &&
-        		    !ClassUtils.isPrimitiveOrWrapper(targetType) &&
-        		    targetType != String.class)  {
-                return convertMapToObject((Map<String, Object>) input, targetType);
+            if (rawType.isEnum()) {
+                return convertEnum(input, (Class<? extends Enum>) rawType);
             }
-            
-            if (targetType.isEnum()) {
-                return Enum.valueOf((Class<Enum>) targetType, input.toString());
+
+            if (rawType.isArray()) {
+                return convertArray(input, targetType);
             }
-            
-        	// Use Spring's ConversionService for conversion
-            if (conversionService.canConvert(input.getClass(), targetType)) {
-                return conversionService.convert(input, targetType);
+
+            if (Collection.class.isAssignableFrom(rawType)) {
+                return convertCollection(input, targetType);
             }
-            
-            throw new IllegalArgumentException(
-            	    "Cannot convert " + input.getClass().getName() +
-            	    " to " + targetType.getName()
-            	);
+
+            if (input instanceof Map<?, ?> || Map.class.isAssignableFrom(rawType)) {
+                return objectMapper.convertValue(input, targetType);
+            }
+
+            if (conversionService.canConvert(input.getClass(), rawType)) {
+                return conversionService.convert(input, rawType);
+            }
+
+            return objectMapper.convertValue(input, targetType);
                         
         } catch (Exception e) {
-            throw new RuntimeException("Type conversion failed for value: " + input + " to type: " + targetType, e);
+            throw new IllegalArgumentException(
+                "Cannot convert value '" + input + "' (" + input.getClass().getName() +
+                ") to " + targetType.toCanonical() + ": " + rootCauseMessage(e),
+                e
+            );
         }
     }
-    
-    private Object convertMapToObject(Map<String, Object> map, Class<?> targetType) {
-        try {
-            return objectMapper.convertValue(map, targetType);
-        } catch (Exception e) {
-            throw new RuntimeException("Cannot convert map to " + targetType.getSimpleName(), e);
+
+    private Object convertArray(Object input, JavaType targetType) {
+        JavaType componentType = targetType.getContentType();
+        Class<?> componentClass = targetType.getRawClass().getComponentType();
+        Collection<?> values = toCollection(input, targetType);
+        Object array = Array.newInstance(componentClass, values.size());
+
+        int index = 0;
+        for (Object value : values) {
+            Array.set(array, index, convert(value, componentType));
+            index++;
         }
+
+        return array;
+    }
+
+    private Collection<?> convertCollection(Object input, JavaType targetType) {
+        JavaType elementType = targetType.getContentType();
+        Collection<?> values = toCollection(input, targetType);
+        Collection<Object> converted = newCollection(targetType.getRawClass());
+
+        for (Object value : values) {
+            converted.add(convert(value, elementType));
+        }
+
+        return converted;
+    }
+
+    private Collection<?> toCollection(Object input, JavaType targetType) {
+        if (input instanceof Collection<?> collection) {
+            return collection;
+        }
+
+        if (input.getClass().isArray()) {
+            int length = Array.getLength(input);
+            Collection<Object> values = new ArrayList<>(length);
+            for (int i = 0; i < length; i++) {
+                values.add(Array.get(input, i));
+            }
+            return values;
+        }
+
+        throw new IllegalArgumentException(
+            "Expected collection or array input for " + targetType.toCanonical() +
+            " but received " + input.getClass().getName()
+        );
+    }
+
+    private Collection<Object> newCollection(Class<?> rawType) {
+        if (Set.class.isAssignableFrom(rawType)) {
+            return new LinkedHashSet<>();
+        }
+
+        return new ArrayList<>();
+    }
+
+    @SuppressWarnings("rawtypes")
+    private Enum<?> convertEnum(Object input, Class<? extends Enum> enumType) {
+        String rawValue = input.toString();
+        String normalizedValue = normalizeEnumValue(rawValue);
+
+        for (Enum<?> enumConstant : enumType.getEnumConstants()) {
+            if (enumConstant.name().equalsIgnoreCase(rawValue) ||
+                normalizeEnumValue(enumConstant.name()).equals(normalizedValue) ||
+                enumConstant.toString().equalsIgnoreCase(rawValue)) {
+                return enumConstant;
+            }
+        }
+
+        throw new IllegalArgumentException(
+            "Invalid enum value '" + rawValue + "' for " + enumType.getSimpleName() +
+            ". Expected one of: " + String.join(", ", enumNames(enumType))
+        );
+    }
+
+    private String normalizeEnumValue(String value) {
+        return value.trim().replace('-', '_').replace(' ', '_').toUpperCase();
+    }
+
+    @SuppressWarnings("rawtypes")
+    private String[] enumNames(Class<? extends Enum> enumType) {
+        Enum[] constants = enumType.getEnumConstants();
+        String[] names = new String[constants.length];
+        for (int i = 0; i < constants.length; i++) {
+            names[i] = constants[i].name();
+        }
+        return names;
     }
 
     
@@ -89,5 +190,14 @@ public class RuntimeTypeConverter {
             if (type == short.class) return (short) 0;
         }
         return null;
+    }
+
+    private String rootCauseMessage(Throwable throwable) {
+        Throwable current = throwable;
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+
+        return current.getMessage() != null ? current.getMessage() : current.getClass().getSimpleName();
     }
 }

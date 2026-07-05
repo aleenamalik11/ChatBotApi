@@ -1,7 +1,6 @@
 package com.chatbot.api.dto;
 
 import java.lang.reflect.Method;
-import java.lang.reflect.Parameter;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -11,10 +10,12 @@ import lombok.Setter;
 public class MethodDetails {
 	 private Method method;
 	 private String beanName;
+     private ParameterMetadata[] parameters;
     
-    public MethodDetails(Method method, String beanName) {
+    public MethodDetails(Method method, String beanName, ParameterMetadata[] parameters) {
         this.method = method;
         this.beanName = beanName;
+        this.parameters = parameters;
     }
     
 }
