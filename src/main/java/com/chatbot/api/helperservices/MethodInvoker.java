@@ -1,11 +1,9 @@
 package com.chatbot.api.helperservices;
 
-import java.lang.reflect.Method;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Parameter;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
 
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Service;
 
 import com.chatbot.api.dto.MethodDetails;
@@ -15,93 +13,56 @@ import com.chatbot.api.utils.RuntimeTypeConverter;
 @Service
 public class MethodInvoker {
 	
-	private final ApplicationContext applicationContext;
-
 	private final RuntimeTypeConverter converter;
+	private final WorkflowFunctionRegistry registry;
+	private final BeanResolver beanResolver;
 
-	public MethodInvoker(ApplicationContext context,
-	                     RuntimeTypeConverter converter) {
-	    this.applicationContext = context;
+	public MethodInvoker(RuntimeTypeConverter converter, WorkflowFunctionRegistry registry, BeanResolver beanResolver) {
 	    this.converter = converter;
+	    this.registry = registry;
+	    this.beanResolver = beanResolver;
 	}
-    
-    private final Map<String, MethodDetails> methodCache = new ConcurrentHashMap<>();
+
     
     public MethodResult invoke(Map<String, Object> inputs, String command) {
         try {
-            MethodDetails method = getMethodsFromCache(command);
+        	MethodDetails method = registry.get(command);
             
             if (method == null) {
-                return new MethodResult(null, "Method not found for: " + command);
+                return failure(command, "method not found");
             }
                        
-            try {
-                MethodResult result = invokeMethod(method, inputs);
-                if ("success".equals(result.getResult())) {
-                    return result;
-                }
-            } catch (Exception e) {
-                System.out.println("Error invoking method " + method.getMethod().getName() + ": " + e.getMessage());
-                // Continue to try next method
-            }
-            
-            // If we get here, all methods failed
-            return new MethodResult(null, "failure");
+            return invokeMethod(method, inputs);
             
         } catch (Exception ex) {
-            ex.printStackTrace();
-            return new MethodResult(null, "failure");
+            return failure(command, rootCauseMessage(ex));
         }
+    }
+
+    public MethodResult invoke(Map<String, Object> inputs, String command, String packageName) {
+        return invoke(inputs, command);
     }
         
     private MethodResult invokeMethod(MethodDetails methodDetails, Map<String, Object> inputs) throws Exception {
-        Object instance = methodDetails.getBean();
+    	Object instance = beanResolver.getBean(methodDetails.getBeanName());
 
         Object[] args = prepareMethodArguments(methodDetails, inputs);
-        Object output = methodDetails.getMethod().invoke(instance, args);
+        Object output;
+        try {
+            output = methodDetails.getMethod().invoke(instance, args);
+        } catch (InvocationTargetException ex) {
+            Throwable targetException = ex.getTargetException();
+            if (targetException instanceof Exception exception) {
+                throw exception;
+            }
+            throw ex;
+        }
         
         System.out.println("Successfully invoked " + methodDetails.getMethod().getName());
         return new MethodResult(output, "success");
     }
     
-    private MethodDetails getMethodsFromCache(String command) {
-        
-    	MethodDetails method = methodCache.get(command);
-
-    	if (method != null)
-    	    return method;
-
-    	method = scanMethods(command);
-
-    	if (method != null)
-    	    methodCache.put(command, method);
-
-    	return method;
-    }
     
-    private MethodDetails scanMethods(String command) {
-
-        String[] beanNames = applicationContext.getBeanDefinitionNames();
-
-        for (String beanName : beanNames) {
-            Object bean = applicationContext.getBean(beanName);
-
-            for (Method method : bean.getClass().getMethods()) {
-
-                WorkflowFunction annotation =
-                        method.getAnnotation(WorkflowFunction.class);
-
-                if (annotation != null && annotation.name().equals(command)) {
-
-                	MethodDetails methodDetails = new MethodDetails(method, bean);
-
-                    return methodDetails;
-                }
-            }
-        }
-
-        return null;
-    }
     
     private Object[] prepareMethodArguments(MethodDetails methodDetails, Map<String, Object> inputs) {
         Parameter[] parameters = methodDetails.getMethod().getParameters();
@@ -112,42 +73,39 @@ public class MethodInvoker {
             for (int i = 0; i < parameters.length; i++) {
                 Parameter param = parameters[i];
                 Class<?> paramType = param.getType();
-                Object value = null;
-                
-                if (!isSimple(paramType)) {
-                    value = converter.castToRuntimeType(inputs, paramType);
-                } else {
-                	WorkflowParam annotation = param.getAnnotation(WorkflowParam.class);
+                WorkflowParam annotation = param.getAnnotation(WorkflowParam.class);
 
-                    if (annotation == null) {
-                        throw new IllegalStateException(
-                            "Simple parameter '" + param.getName() +
-                            "' must have @WorkflowParam."
-                        );
-                    }
-                    
-                    value = converter.castToRuntimeType(
-                            inputs.get(annotation.name()),
-                            paramType
-                        );
-                    
+                if (annotation == null) {
+                    throw new IllegalStateException(
+                        "Parameter '" + param.getName() + "' must have @WorkflowParam."
+                    );
                 }
-                args[i] = value;
+
+                if (inputs == null || !inputs.containsKey(annotation.name())) {
+                    throw new IllegalArgumentException(
+                        "Missing input '" + annotation.name() + "' for parameter '" + param.getName() + "'."
+                    );
+                }
+
+                args[i] = converter.castToRuntimeType(inputs.get(annotation.name()), paramType);
             }
         } catch (Exception ex) {
-            System.err.println("Error preparing method arguments: " + ex.getMessage());
             throw new RuntimeException("Failed to prepare method arguments", ex);
         }
         
         return args;
     }
     
-    private boolean isSimple(Class<?> type) {
-        return type.isPrimitive() || 
-               type.equals(String.class) || 
-               Number.class.isAssignableFrom(type) ||
-               type.equals(Boolean.class) ||
-               type.equals(Character.class) ||
-               type.equals(Enum.class);
+    private MethodResult failure(String command, String rootCause) {
+        return new MethodResult(null, "Command '" + command + "' failed: " + rootCause);
+    }
+
+    private String rootCauseMessage(Throwable throwable) {
+        Throwable current = throwable;
+        while (current.getCause() != null) {
+            current = current.getCause();
+        }
+
+        return current.getMessage() != null ? current.getMessage() : current.getClass().getSimpleName();
     }
 }

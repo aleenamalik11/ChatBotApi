@@ -10,11 +10,11 @@ import lombok.Setter;
 @Setter
 public class MethodDetails {
 	 private Method method;
-	 private Object bean;
+	 private String beanName;
     
-    public MethodDetails(Method method, Object bean) {
+    public MethodDetails(Method method, String beanName) {
         this.method = method;
-        this.bean = bean;
+        this.beanName = beanName;
     }
     
 }

@@ -36,7 +36,7 @@ public class RuntimeTypeConverter {
     	if (input == null) return getDefaultValue(targetType);
         
         // If already correct type, return as-is
-        if (targetType.isInstance(input.getClass())) {
+        if (targetType.isInstance(input)) {
             return input;
         }
         try {
